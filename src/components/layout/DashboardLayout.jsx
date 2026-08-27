@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import ToastStack from '../common/ToastStack.jsx'
 import Navbar from './Navbar.jsx'
 import Sidebar from './Sidebar.jsx'
+import { useFitness } from '../../context/FitnessContext.jsx'
 
 export default function DashboardLayout() {
+  const { user } = useFitness()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  if (!user) return <Navigate to="/onboarding" replace />
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-neutral-950 dark:text-neutral-50">
       {mobileOpen && <button className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}

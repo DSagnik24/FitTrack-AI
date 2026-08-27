@@ -6,7 +6,7 @@ import TodayWorkout from '../components/dashboard/TodayWorkout.jsx'
 import { useFitness } from '../context/FitnessContext.jsx'
 
 export default function Dashboard() {
-  const { user, progress } = useFitness()
+  const { user, progress, goals } = useFitness()
   const date = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())
 
   return (
@@ -25,7 +25,7 @@ export default function Dashboard() {
         <section className="panel p-5">
           <h3 className="text-lg font-semibold">Weekly Progress</h3>
           <p className="muted mt-1">Training volume is trending up this month.</p>
-          <div className="mt-4 h-72">
+          {progress.weeklyVolume.length < 1 ? <p className="muted mt-6">Complete a workout to see your weekly volume.</p> : <div className="mt-4 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={progress.weeklyVolume}>
                 <defs>
@@ -41,7 +41,7 @@ export default function Dashboard() {
                 <Area type="monotone" dataKey="volume" stroke="#14b8a6" fill="url(#volume)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
+          </div>}
         </section>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -49,11 +49,11 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">Weight Progress</h3>
-              <p className="muted mt-1">82 kg to 77.8 kg</p>
+              <p className="muted mt-1">{progress.weightProgress.length < 2 ? 'Add more measurements to see your progress.' : 'Recent measurements'}</p>
             </div>
             <TrendingDown className="text-mint" />
           </div>
-          <div className="mt-4 h-64">
+          {progress.weightProgress.length < 2 ? <p className="muted mt-6">Add more measurements to see your progress chart.</p> : <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={progress.weightProgress}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -63,7 +63,7 @@ export default function Dashboard() {
                 <Line dataKey="weight" stroke="#111827" strokeWidth={3} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </div>}
         </section>
         <section className="panel p-5">
           <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export default function Dashboard() {
               <p className="muted mt-1">Generated from recent trends</p>
             </div>
           </div>
-          <p className="mt-5 text-lg leading-8 text-slate-700 dark:text-neutral-200">You're making steady progress. Water intake is close to target, strength is climbing, and your next easy win is adding 20g protein on training days.</p>
+          <p className="mt-5 text-lg leading-8 text-slate-700 dark:text-neutral-200">{goals ? 'Log workouts, meals, and measurements to build personalized insights.' : 'Complete onboarding to begin tracking your fitness data.'}</p>
         </section>
       </div>
     </div>

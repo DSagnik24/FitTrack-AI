@@ -10,7 +10,7 @@ export default function Nutrition() {
   const { nutrition, nutritionTotals, goals, addFood } = useFitness()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState('breakfast')
-  const caloriesPercent = Math.min(100, (nutritionTotals.calories / goals.targetCalories) * 100)
+  const caloriesPercent = goals?.targetCalories ? Math.min(100, (nutritionTotals.calories / goals.targetCalories) * 100) : 0
 
   const openAddFood = (mealId = 'breakfast') => {
     setSelectedMeal(mealId)
@@ -32,7 +32,7 @@ export default function Nutrition() {
             <div className="grid h-40 w-40 place-items-center rounded-full bg-white dark:bg-neutral-900">
               <div>
                 <p className="text-4xl font-bold">{nutritionTotals.calories.toLocaleString()}</p>
-                <p className="muted">of {goals.targetCalories} kcal</p>
+                <p className="muted">{goals?.targetCalories ? `of ${goals.targetCalories} kcal` : 'Set a calorie goal'}</p>
               </div>
             </div>
           </div>
@@ -41,9 +41,9 @@ export default function Nutrition() {
         <section className="panel p-5">
           <h3 className="text-lg font-semibold">Macronutrients</h3>
           <div className="mt-4 grid gap-3">
-            <MacroCard label="Protein" current={nutritionTotals.protein} goal={goals.proteinGoal} color="bg-amber" />
-            <MacroCard label="Carbohydrates" current={nutritionTotals.carbs} goal={nutrition.macros.carbs.goal} color="bg-mint" />
-            <MacroCard label="Fats" current={nutritionTotals.fat} goal={nutrition.macros.fat.goal} color="bg-coral" />
+            <MacroCard label="Protein" current={nutritionTotals.protein} goal={goals?.proteinGoal} color="bg-amber" />
+            <MacroCard label="Carbohydrates" current={nutritionTotals.carbs} goal={null} color="bg-mint" />
+            <MacroCard label="Fats" current={nutritionTotals.fat} goal={null} color="bg-coral" />
           </div>
         </section>
       </div>

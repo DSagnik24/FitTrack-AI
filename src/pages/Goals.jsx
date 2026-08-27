@@ -10,11 +10,11 @@ export default function Goals() {
 
   const fields = [
     ['targetWeight', 'Target Weight', 'kg', user.currentWeight],
-    ['targetCalories', 'Target Calories', 'kcal', 1850],
-    ['proteinGoal', 'Protein Goal', 'g', 110],
-    ['weeklyWorkoutGoal', 'Weekly Workout Goal', 'workouts', 4],
-    ['dailyWaterGoal', 'Daily Water Goal', 'L', 2.2],
-    ['dailyStepGoal', 'Daily Step Goal', 'steps', 6850],
+    ['targetCalories', 'Target Calories', 'kcal', 0],
+    ['proteinGoal', 'Protein Goal', 'g', 0],
+    ['weeklyWorkoutGoal', 'Weekly Workout Goal', 'workouts', 0],
+    ['dailyWaterGoal', 'Daily Water Goal', 'L', 0],
+    ['dailyStepGoal', 'Daily Step Goal', 'steps', 0],
   ]
 
   const save = (event) => {

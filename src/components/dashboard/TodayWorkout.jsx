@@ -7,7 +7,17 @@ export default function TodayWorkout() {
   const navigate = useNavigate()
   const { workouts } = useFitness()
   const workout = workouts[0]
-  const totalSets = workout.exercises.reduce((sum, exercise) => sum + exercise.sets, 0)
+  if (!workout) {
+    return (
+      <section className="panel p-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-mint">Today's Workout</p>
+        <h2 className="mt-2 text-2xl font-semibold">No workout plans yet</h2>
+        <p className="muted mt-2">Create your first workout plan to start training.</p>
+        <Button className="mt-5" onClick={() => navigate('/workouts')}><Dumbbell size={16} />Create Workout</Button>
+      </section>
+    )
+  }
+  const totalSets = workout.exercises.reduce((sum, exercise) => sum + Number(exercise.sets || exercise.targetSets || 0), 0)
 
   return (
     <section className="panel p-5">

@@ -13,7 +13,7 @@ export default function ActiveWorkout() {
   const workout = workouts[0]
   const [elapsed, setElapsed] = useState(0)
   const [complete, setComplete] = useState(false)
-  const totalSets = useMemo(() => workout.exercises.reduce((sum, exercise) => sum + exercise.sets, 0), [workout])
+  const totalSets = useMemo(() => workout?.exercises.reduce((sum, exercise) => sum + Number(exercise.sets || exercise.targetSets || 0), 0) || 0, [workout])
 
   useEffect(() => {
     const timer = window.setInterval(() => setElapsed((value) => value + 1), 1000)
@@ -22,6 +22,7 @@ export default function ActiveWorkout() {
 
   const elapsedText = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`
 
+  if (!workout) return <section className="panel p-6"><h2 className="text-2xl font-bold">No active workout</h2><p className="muted mt-2">Create a workout plan before starting a session.</p><Button className="mt-5" onClick={() => navigate('/workouts')}>View Workout Plans</Button></section>
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -38,10 +39,10 @@ export default function ActiveWorkout() {
       <section className="panel p-5">
         <h3 className="text-lg font-semibold">Workout Summary</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
-          <p className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-950">Duration<br /><strong>1h 08m</strong></p>
+          <p className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-950">Duration<br /><strong>{elapsedText}</strong></p>
           <p className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-950">Exercises<br /><strong>{workout.exercises.length}</strong></p>
           <p className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-950">Sets<br /><strong>{totalSets}</strong></p>
-          <p className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-950">Volume<br /><strong>12,450 kg</strong></p>
+          <p className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-950">Volume<br /><strong>Not logged</strong></p>
         </div>
       </section>
       <Modal title="Workout Complete!" open={complete} onClose={() => setComplete(false)}>
@@ -50,9 +51,8 @@ export default function ActiveWorkout() {
           <div>
             <h3 className="text-2xl font-bold">Great job!</h3>
             <p className="muted mt-1">Total Volume</p>
-            <p className="mt-2 text-3xl font-semibold">12,450 kg</p>
+            <p className="mt-2 text-3xl font-semibold">No completed sets</p>
           </div>
-          <div className="rounded-lg bg-amber/10 p-4 text-amber">Bench Press +5kg personal record</div>
           <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
         </div>
       </Modal>

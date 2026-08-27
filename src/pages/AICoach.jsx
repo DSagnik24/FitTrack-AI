@@ -15,7 +15,7 @@ const mockResponse = (message) => {
     return 'Based on your recent meals, you are averaging close to 120g protein per day. Your target is 150g, so add one high-protein snack or increase paneer, eggs, or chicken portions at lunch.'
   }
   if (message.toLowerCase().includes('weight')) {
-    return 'Your weight has moved from 82 kg to 77.8 kg across the last several months. If the scale is flat this week, keep calories steady and compare the 7-day average instead of one morning weigh-in.'
+    return 'Your AI Coach needs more data to provide personalized insights. Try logging workouts, measurements, nutrition, sleep, and daily activity.'
   }
   if (message.toLowerCase().includes('weights')) {
     return 'Increase load when you can complete every target set with clean reps and still have 1-2 reps in reserve. For bench press, a 2.5kg jump is a sensible next step.'

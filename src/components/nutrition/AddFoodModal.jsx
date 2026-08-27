@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { foodSuggestions } from '../../data/mockNutrition.js'
 import Button from '../common/Button.jsx'
 import Modal from '../common/Modal.jsx'
 
@@ -11,6 +10,7 @@ const initialForm = {
   fat: '',
   mealId: 'breakfast',
 }
+const foodSuggestions = ['Dal', 'Rice', 'Roti', 'Paneer']
 
 export default function AddFoodModal({ open, onClose, meals, selectedMeal, onSubmit }) {
   const [form, setForm] = useState({ ...initialForm, mealId: selectedMeal || 'breakfast' })

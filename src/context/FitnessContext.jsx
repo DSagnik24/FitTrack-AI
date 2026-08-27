@@ -1,48 +1,18 @@
 import { createContext, useContext, useMemo, useState } from 'react'
-import { initialNutrition } from '../data/mockNutrition.js'
-import { strengthProgress, weeklyVolume, weightProgress } from '../data/mockProgress.js'
-import { workoutPlans } from '../data/mockWorkouts.js'
+import { readStorage, writeStorage } from '../services/storageService.js'
 
 const FitnessContext = createContext(null)
 
-const defaultUser = {
-  name: 'Sagnik',
-  age: 24,
-  height: '178 cm',
-  currentWeight: 77.8,
-  fitnessLevel: 'Intermediate',
-  primaryGoal: 'Build Muscle',
-  avatar: 'https://api.dicebear.com/9.x/initials/svg?seed=Sagnik',
-}
-
-const defaultGoals = {
-  targetWeight: 76,
-  targetCalories: 2300,
-  proteinGoal: 150,
-  weeklyWorkoutGoal: 5,
-  dailyWaterGoal: 3,
-  dailyStepGoal: 10000,
-}
-
-const readStorage = (key, fallback) => {
-  try {
-    const value = localStorage.getItem(key)
-    return value ? JSON.parse(value) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-const writeStorage = (key, value) => {
-  localStorage.setItem(key, JSON.stringify(value))
-}
-
 export function FitnessProvider({ children }) {
-  const [user, setUserState] = useState(() => readStorage('fittrack-user', defaultUser))
-  const [goals, setGoalsState] = useState(() => readStorage('fittrack-goals', defaultGoals))
-  const [nutrition, setNutritionState] = useState(() => readStorage('fittrack-nutrition', initialNutrition))
-  const [water, setWaterState] = useState(() => readStorage('fittrack-water', 2.2))
-  const [workouts, setWorkoutsState] = useState(() => readStorage('fittrack-workouts', workoutPlans))
+  const [user, setUserState] = useState(() => readStorage('user', null))
+  const [goals, setGoalsState] = useState(() => readStorage('goals', null))
+  const [workouts, setWorkoutsState] = useState(() => readStorage('workouts', []))
+  const [workoutHistory, setWorkoutHistory] = useState(() => readStorage('workout-history', []))
+  const [nutritionEntries, setNutritionEntries] = useState(() => readStorage('nutrition', []))
+  const [waterEntries, setWaterEntries] = useState(() => readStorage('water', []))
+  const [sleepEntries, setSleepEntries] = useState(() => readStorage('sleep', []))
+  const [stepEntries, setStepEntries] = useState(() => readStorage('steps', []))
+  const [measurements, setMeasurements] = useState(() => readStorage('measurements', []))
   const [toasts, setToasts] = useState([])
 
   const notify = (message, type = 'success') => {
@@ -53,42 +23,31 @@ export function FitnessProvider({ children }) {
 
   const setUser = (next) => {
     setUserState(next)
-    writeStorage('fittrack-user', next)
+    writeStorage('user', next)
   }
 
   const setGoals = (next) => {
     setGoalsState(next)
-    writeStorage('fittrack-goals', next)
-  }
-
-  const setNutrition = (next) => {
-    setNutritionState(next)
-    writeStorage('fittrack-nutrition', next)
+    writeStorage('goals', next)
   }
 
   const setWorkouts = (next) => {
     setWorkoutsState(next)
-    writeStorage('fittrack-workouts', next)
+    writeStorage('workouts', next)
   }
 
   const addWater = (liters) => {
-    setWaterState((current) => {
-      const next = Math.min(Number((current + liters).toFixed(2)), goals.dailyWaterGoal)
-      writeStorage('fittrack-water', next)
-      return next
-    })
+    const next = [...waterEntries, { id: crypto.randomUUID(), amount: Number(liters), date: new Date().toISOString() }]
+    setWaterEntries(next)
+    writeStorage('water', next)
     notify(`Added ${Math.round(liters * 1000)} ml water`)
   }
 
   const addFood = (mealId, food) => {
-    const nextNutrition = {
-      ...nutrition,
-      meals: nutrition.meals.map((meal) =>
-        meal.id === mealId ? { ...meal, foods: [...meal.foods, { ...food, id: crypto.randomUUID() }] } : meal,
-      ),
-    }
-    setNutrition(nextNutrition)
-    notify(`${food.name} added to ${mealId}`)
+    const next = [...nutritionEntries, { ...food, foodName: food.foodName || food.name, mealType: mealId, id: crypto.randomUUID(), date: food.date || new Date().toISOString() }]
+    setNutritionEntries(next)
+    writeStorage('nutrition', next)
+    notify(`${food.foodName || food.name} added to ${mealId}`)
   }
 
   const addWorkoutPlan = (plan) => {
@@ -101,18 +60,25 @@ export function FitnessProvider({ children }) {
     notify('Workout plan deleted')
   }
 
-  const nutritionTotals = useMemo(() => {
-    const foods = nutrition.meals.flatMap((meal) => meal.foods)
-    return foods.reduce(
+  const today = new Date().toISOString().slice(0, 10)
+  const nutritionTotals = useMemo(() => nutritionEntries.filter((entry) => entry.date?.slice(0, 10) === today).reduce(
       (totals, food) => ({
         calories: totals.calories + Number(food.calories || 0),
         protein: totals.protein + Number(food.protein || 0),
-        carbs: totals.carbs + Number(food.carbs || 0),
+        carbs: totals.carbs + Number(food.carbohydrates || food.carbs || 0),
         fat: totals.fat + Number(food.fat || 0),
       }),
       { calories: 0, protein: 0, carbs: 0, fat: 0 },
-    )
-  }, [nutrition])
+    ), [nutritionEntries, today])
+
+  const nutrition = useMemo(() => ({
+    meals: ['breakfast', 'lunch', 'dinner', 'snacks'].map((id) => ({ id, name: id[0].toUpperCase() + id.slice(1), foods: nutritionEntries.filter((entry) => entry.mealType === id && entry.date?.slice(0, 10) === today) })),
+    macros: { carbs: { goal: null }, fat: { goal: null } },
+  }), [nutritionEntries, today])
+  const water = waterEntries.filter((entry) => entry.date?.slice(0, 10) === today).reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
+  const latestMeasurement = [...measurements].reverse().find((entry) => entry.weight !== null && entry.weight !== '')
+  const weeklyVolume = workoutHistory.filter((entry) => new Date(entry.endTime || entry.startTime) >= new Date(Date.now() - 7 * 86400000)).map((entry) => ({ week: new Date(entry.endTime || entry.startTime).toLocaleDateString(), volume: entry.totalVolume || 0 }))
+  const weightProgress = measurements.filter((entry) => entry.weight !== null && entry.weight !== '').map((entry) => ({ month: entry.date, weight: Number(entry.weight) }))
 
   const value = {
     user,
@@ -120,14 +86,24 @@ export function FitnessProvider({ children }) {
     goals,
     setGoals,
     nutrition,
-    setNutrition,
     nutritionTotals,
     water,
     addWater,
     workouts,
     addWorkoutPlan,
     deleteWorkoutPlan,
-    progress: { weightProgress, strengthProgress, weeklyVolume },
+    progress: { weightProgress, strengthProgress: [], weeklyVolume },
+    workoutHistory,
+    nutritionEntries,
+    waterEntries,
+    sleepEntries,
+    stepEntries,
+    measurements,
+    currentWeight: latestMeasurement?.weight ?? null,
+    addMeasurement: (entry) => { const next = [...measurements, { ...entry, id: crypto.randomUUID() }]; setMeasurements(next); writeStorage('measurements', next) },
+    addSleep: (entry) => { const next = [...sleepEntries, { ...entry, id: crypto.randomUUID() }]; setSleepEntries(next); writeStorage('sleep', next) },
+    addSteps: (entry) => { const next = [...stepEntries, { ...entry, id: crypto.randomUUID() }]; setStepEntries(next); writeStorage('steps', next) },
+    completeWorkout: (entry) => { const next = [...workoutHistory, { ...entry, id: crypto.randomUUID() }]; setWorkoutHistory(next); writeStorage('workout-history', next) },
     toasts,
     notify,
   }
