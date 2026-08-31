@@ -3,8 +3,10 @@ package com.forgefit.forgeFit_Backend.controller;
 import com.forgefit.forgeFit_Backend.dto.AuthResponse;
 import com.forgefit.forgeFit_Backend.dto.RegisterRequest;
 import com.forgefit.forgeFit_Backend.service.AuthService;
+import com.forgefit.forgeFit_Backend.dto.LoginRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,5 +27,13 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(authService.register(request));
+    }
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request
+            ){
+        return ResponseEntity.ok(
+                authService.login(request)
+        );
     }
 }
