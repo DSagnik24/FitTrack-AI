@@ -1,41 +1,45 @@
 package com.forgefit.forgeFit_Backend.service;
 
 import com.forgefit.forgeFit_Backend.dto.AIResponse;
-import com.openai.client.OpenAIClient;
-import com.openai.models.ChatModel;
-import com.openai.models.responses.Response;
-import com.openai.models.responses.ResponseCreateParams;
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentConfig;
+import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.ThinkingConfig;
+import com.google.genai.types.ThinkingLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AIService {
 
-    private final OpenAIClient openAIClient;
+    private final Client geminiClient;
 
     public AIResponse askAI(String message) {
 
-        ResponseCreateParams params =
-                ResponseCreateParams.builder()
-                        .model("gpt-5.6")
-                        .input(message)
+        System.out.println(">>> Sending request to Gemini...");
+
+        GenerateContentConfig config =
+                GenerateContentConfig.builder()
+                        .thinkingConfig(
+                                ThinkingConfig.builder()
+                                        .thinkingLevel(new ThinkingLevel("minimal"))
+                                        .build()
+                        )
+                        .maxOutputTokens(200)
                         .build();
 
-        Response response =
-                openAIClient.responses().create(params);
+        GenerateContentResponse response =
+                geminiClient.models.generateContent(
+                        "gemini-3.6-flash",
+                        message,
+                        config
+                );
 
-        String output = response.output().stream()
-                .flatMap(item -> item.message().stream())
-                .flatMap(messageOutput -> messageOutput.content().stream())
-                .flatMap(content -> content.outputText().stream())
-                .map(outputText -> outputText.text())
-                .collect(Collectors.joining());
+        System.out.println(">>> Gemini response received!");
 
         return AIResponse.builder()
-                .response(output)
+                .response(response.text())
                 .build();
     }
 }
