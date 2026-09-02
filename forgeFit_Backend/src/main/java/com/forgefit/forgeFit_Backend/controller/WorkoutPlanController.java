@@ -47,4 +47,28 @@ public class WorkoutPlanController {
                 )
         );
     }
+    @PutMapping("/{planId}")
+    public ResponseEntity<WorkoutPlanResponse> updateWorkoutPlan(
+            @PathVariable Long planId,
+            Authentication authentication,
+            @Valid @RequestBody WorkoutPlanRequest request
+    ){
+        return ResponseEntity.ok(
+                workoutPlanService.updateWorkoutPlan(
+                        authentication.getName(),
+                        planId,
+                        request
+                )
+        );
+    }
+    @DeleteMapping("/{planId}")
+    public ResponseEntity<Void> deleteWorkoutPlan(
+            @PathVariable Long planId,
+            Authentication authentication
+    ){
+        workoutPlanService.deleteWorkoutPlan(
+                authentication.getName(), planId
+        );
+        return ResponseEntity.noContent().build();
+    }
 }

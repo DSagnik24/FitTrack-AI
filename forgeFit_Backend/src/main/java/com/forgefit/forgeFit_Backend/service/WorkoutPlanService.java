@@ -56,6 +56,71 @@ public class WorkoutPlanService {
                 .toList();
     }
 
+    public WorkoutPlanResponse updateWorkoutPlan(
+            String email,
+            Long planId,
+            WorkoutPlanRequest request
+    ) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        WorkoutPlan workoutPlan =
+                workoutPlanRepository.findById(planId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Workout plan not found"
+                                )
+                        );
+
+        if (!workoutPlan.getUser().getUserId()
+                .equals(user.getUserId())) {
+
+            throw new RuntimeException(
+                    "You are not authorized to update this workout plan"
+            );
+        }
+
+        workoutPlan.setName(request.getName());
+        workoutPlan.setDescription(request.getDescription());
+
+        WorkoutPlan updatedPlan =
+                workoutPlanRepository.save(workoutPlan);
+
+        return mapToResponse(updatedPlan);
+    }
+
+    public void deleteWorkoutPlan(
+            String email,
+            Long planId
+    ) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        WorkoutPlan workoutPlan =
+                workoutPlanRepository.findById(planId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Workout plan not found"
+                                )
+                        );
+
+        if (!workoutPlan.getUser().getUserId()
+                .equals(user.getUserId())) {
+
+            throw new RuntimeException(
+                    "You are not authorized to delete this workout plan"
+            );
+        }
+
+        workoutPlanRepository.delete(workoutPlan);
+    }
+
     private WorkoutPlanResponse mapToResponse(
             WorkoutPlan workoutPlan
     ) {
