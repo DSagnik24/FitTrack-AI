@@ -14,10 +14,37 @@ import org.springframework.stereotype.Service;
 public class AIService {
 
     private final Client geminiClient;
+    private final AIContextService aiContextService;
 
-    public AIResponse askAI(String message) {
+    public AIResponse askAI(String message, String email) {
 
-        System.out.println(">>> Sending request to Gemini...");
+        System.out.println(">>> Building ForgeFit AI context...");
+
+        String userContext = aiContextService.buildContext(email);
+
+        String prompt = """
+                You are ForgeFit AI, a personal fitness assistant.
+
+                Use the user's ForgeFit data below to provide personalized,
+                practical and concise fitness guidance.
+
+                Do not invent user data.
+                If some data is missing, simply work with the available data.
+
+                USER'S FORGEFIT DATA
+                ====================
+
+                %s
+
+                USER'S QUESTION
+                ===============
+
+                %s
+
+                Answer the user's question based on their actual ForgeFit data.
+                """.formatted(userContext, message);
+
+        System.out.println(">>> Sending personalized request to Gemini...");
 
         GenerateContentConfig config =
                 GenerateContentConfig.builder()
@@ -26,13 +53,13 @@ public class AIService {
                                         .thinkingLevel(new ThinkingLevel("minimal"))
                                         .build()
                         )
-                        .maxOutputTokens(200)
+                        .maxOutputTokens(500)
                         .build();
 
         GenerateContentResponse response =
                 geminiClient.models.generateContent(
                         "gemini-3.6-flash",
-                        message,
+                        prompt,
                         config
                 );
 

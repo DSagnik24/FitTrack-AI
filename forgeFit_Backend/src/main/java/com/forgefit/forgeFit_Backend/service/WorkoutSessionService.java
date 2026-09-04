@@ -1,11 +1,10 @@
 package com.forgefit.forgeFit_Backend.service;
 
+import com.forgefit.forgeFit_Backend.dto.WorkoutSessionRequest;
 import com.forgefit.forgeFit_Backend.dto.WorkoutSessionResponse;
-import com.forgefit.forgeFit_Backend.entity.User;
-import com.forgefit.forgeFit_Backend.entity.WorkoutPlan;
-import com.forgefit.forgeFit_Backend.entity.WorkoutSession;
-import com.forgefit.forgeFit_Backend.entity.WorkoutSessionStatus;
+import com.forgefit.forgeFit_Backend.entity.*;
 import com.forgefit.forgeFit_Backend.repository.UserRepository;
+import com.forgefit.forgeFit_Backend.repository.WorkoutPlanExerciseRepository;
 import com.forgefit.forgeFit_Backend.repository.WorkoutPlanRepository;
 import com.forgefit.forgeFit_Backend.repository.WorkoutSessionRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +21,7 @@ public class WorkoutSessionService {
     private final WorkoutSessionRepository workoutSessionRepository;
     private final UserRepository userRepository;
     private final WorkoutPlanRepository workoutPlanRepository;
+    private final WorkoutPlanExerciseRepository workoutPlanExerciseRepository;
 
     public WorkoutSessionResponse startWorkoutSession(
             String email,
@@ -67,6 +67,80 @@ public class WorkoutSessionService {
 
         return mapToResponse(saved);
     }
+
+    public WorkoutSessionResponse startSession(
+            String email,
+            WorkoutSessionRequest request) {
+
+        // 1. Get logged-in user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+
+        WorkoutPlan workoutPlan = null;
+
+
+        // 2. If a workout plan is provided
+        if (request.getWorkoutPlanId() != null) {
+
+            workoutPlan = workoutPlanRepository
+                    .findById(request.getWorkoutPlanId())
+                    .orElseThrow(() ->
+                            new RuntimeException(
+                                    "Workout plan not found"));
+
+
+            // 3. Check ownership
+            if (!workoutPlan.getUser().getUserId()
+                    .equals(user.getUserId())) {
+
+                throw new RuntimeException(
+                        "You do not have access to this workout plan");
+            }
+
+
+            // 4. Validate requested day
+            if (request.getDayNumber() != null) {
+
+                List<WorkoutPlanExercise> exercises =
+                        workoutPlanExerciseRepository
+                                .findByWorkoutPlan_IdAndDayNumberOrderByExerciseOrder(
+                                        workoutPlan.getId(),
+                                        request.getDayNumber()
+                                );
+
+
+                if (exercises.isEmpty()) {
+
+                    throw new RuntimeException(
+                            "No exercises found for day "
+                                    + request.getDayNumber());
+                }
+            }
+        }
+
+
+        // 5. Create session
+        WorkoutSession session = WorkoutSession.builder()
+                .user(user)
+                .workoutPlan(workoutPlan)
+                .dayNumber(request.getDayNumber())
+                .notes(request.getNotes())
+                .status(WorkoutSessionStatus.IN_PROGRESS)
+                .startedAt(LocalDateTime.now())
+                .build();
+
+
+        // 6. Save
+        WorkoutSession savedSession =
+                workoutSessionRepository.save(session);
+
+
+        // 7. Return response
+        return mapToResponse(savedSession);
+    }
+
 
     public List<WorkoutSessionResponse> getAllSessions(
             String email
@@ -189,27 +263,32 @@ public class WorkoutSessionService {
     }
 
     private WorkoutSessionResponse mapToResponse(
-            WorkoutSession session
-    ) {
+            WorkoutSession session) {
 
         return WorkoutSessionResponse.builder()
                 .id(session.getId())
-                .userId(session.getUser().getUserId())
+
                 .workoutPlanId(
                         session.getWorkoutPlan() != null
                                 ? session.getWorkoutPlan().getId()
                                 : null
                 )
-                .workoutPlanName(
-                        session.getWorkoutPlan() != null
-                                ? session.getWorkoutPlan().getName()
-                                : null
-                )
+
+                .dayNumber(session.getDayNumber())
+
                 .startedAt(session.getStartedAt())
+
                 .completedAt(session.getCompletedAt())
+
                 .status(session.getStatus())
-                .durationMinutes(session.getDurationMinutes())
+
+                .durationMinutes(
+                        session.getDurationMinutes()
+                )
+
                 .notes(session.getNotes())
+
                 .build();
     }
+
 }

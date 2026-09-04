@@ -23,7 +23,8 @@ public class AIController {
     ) {
 
         return ResponseEntity.ok(
-                aiService.askAI(request.getMessage())
+                aiService.askAI(request.getMessage(),
+                        authentication.getName())
         );
     }
 }

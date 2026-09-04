@@ -28,5 +28,7 @@ public class WorkoutSessionResponse {
 
     private Integer durationMinutes;
 
+    private Integer dayNumber;
+
     private String notes;
 }

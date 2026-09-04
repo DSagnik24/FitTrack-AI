@@ -47,6 +47,10 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.genai</groupId>
             <artifactId>google-genai</artifactId>
             <version>1.67.0</version>

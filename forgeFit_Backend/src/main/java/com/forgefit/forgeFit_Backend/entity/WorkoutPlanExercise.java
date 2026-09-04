@@ -24,6 +24,9 @@ public class WorkoutPlanExercise {
     @JoinColumn(name = "exercise_id", nullable = false)
     private Exercise exercise;
 
+    @Column(name = "day_number", nullable = false)
+    private Integer dayNumber;
+
     @Column(name = "sets")
     private Integer sets;
 

@@ -1,5 +1,6 @@
 package com.forgefit.forgeFit_Backend.controller;
 
+import com.forgefit.forgeFit_Backend.dto.WorkoutDayResponse;
 import com.forgefit.forgeFit_Backend.dto.WorkoutPlanRequest;
 import com.forgefit.forgeFit_Backend.dto.WorkoutPlanResponse;
 import com.forgefit.forgeFit_Backend.service.WorkoutPlanService;
@@ -70,5 +71,21 @@ public class WorkoutPlanController {
                 authentication.getName(), planId
         );
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{planId}/days/{dayNumber}")
+    public ResponseEntity<WorkoutDayResponse> getWorkoutDay(
+            @PathVariable Long planId,
+            @PathVariable Integer dayNumber,
+            Authentication authentication
+    ) {
+
+        return ResponseEntity.ok(
+                workoutPlanService.getWorkoutDay(
+                        authentication.getName(),
+                        planId,
+                        dayNumber
+                )
+        );
     }
 }

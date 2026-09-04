@@ -32,6 +32,9 @@ public class WorkoutSession {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @Column(name = "day_number")
+    private Integer dayNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private WorkoutSessionStatus status;

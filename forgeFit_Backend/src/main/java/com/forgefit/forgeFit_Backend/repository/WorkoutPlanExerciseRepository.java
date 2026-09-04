@@ -9,4 +9,10 @@ public interface WorkoutPlanExerciseRepository
         extends JpaRepository<WorkoutPlanExercise, Long> {
 
     List<WorkoutPlanExercise> findByWorkoutPlan_Id(Long workoutPlanId);
+
+    List<WorkoutPlanExercise> findByWorkoutPlan_IdAndDayNumberOrderByExerciseOrder(
+            Long workoutPlanId,
+            Integer dayNumber
+    );
+
 }
