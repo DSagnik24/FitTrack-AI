@@ -19,6 +19,90 @@ public class WorkoutSessionExerciseController {
     private final WorkoutSessionExerciseService
             workoutSessionExerciseService;
 
+
+    // =========================================================
+    // LOG EXERCISE
+    // =========================================================
+
+//    @PostMapping
+//    public ResponseEntity<WorkoutSessionExerciseResponse> logExercise(
+//            @PathVariable Long sessionId,
+//            @Valid @RequestBody WorkoutSessionExerciseRequest request,
+//            Authentication authentication
+//    ) {
+//
+//        return ResponseEntity.ok(
+//                workoutSessionExerciseService.logExercise(
+//                        authentication.getName(),
+//                        sessionId,
+//                        request
+//                )
+//        );
+//    }
+
+
+    // =========================================================
+    // GET ALL EXERCISES FOR SESSION
+    // =========================================================
+
+//    @GetMapping
+//    public ResponseEntity<List<WorkoutSessionExerciseResponse>>
+//    getSessionExercises(
+//            @PathVariable Long sessionId,
+//            Authentication authentication
+//    ) {
+//
+//        return ResponseEntity.ok(
+//                workoutSessionExerciseService.getSessionExercises(
+//                        authentication.getName(),
+//                        sessionId
+//                )
+//        );
+//    }
+
+
+    // =========================================================
+    // GET SINGLE EXERCISE LOG
+    // =========================================================
+
+    @GetMapping("/{exerciseLogId}")
+    public ResponseEntity<WorkoutSessionExerciseResponse>
+    getSessionExercise(
+            @PathVariable Long sessionId,
+            @PathVariable Long exerciseLogId,
+            Authentication authentication
+    ) {
+
+        return ResponseEntity.ok(
+                workoutSessionExerciseService.getSessionExercise(
+                        authentication.getName(),
+                        sessionId,
+                        exerciseLogId
+                )
+        );
+    }
+
+
+    // =========================================================
+    // DELETE EXERCISE LOG
+    // =========================================================
+
+    @DeleteMapping("/{exerciseLogId}")
+    public ResponseEntity<Void> deleteSessionExercise(
+            @PathVariable Long sessionId,
+            @PathVariable Long exerciseLogId,
+            Authentication authentication
+    ) {
+
+        workoutSessionExerciseService.deleteSessionExercise(
+                authentication.getName(),
+                sessionId,
+                exerciseLogId
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{sessionId}/exercises")
     public ResponseEntity<WorkoutSessionExerciseResponse>
     addExerciseToSession(

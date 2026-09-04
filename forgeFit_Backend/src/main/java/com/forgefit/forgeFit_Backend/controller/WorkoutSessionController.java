@@ -1,5 +1,6 @@
 package com.forgefit.forgeFit_Backend.controller;
 
+import com.forgefit.forgeFit_Backend.dto.WorkoutSessionRequest;
 import com.forgefit.forgeFit_Backend.dto.WorkoutSessionResponse;
 import com.forgefit.forgeFit_Backend.service.WorkoutSessionService;
 import lombok.RequiredArgsConstructor;
@@ -19,14 +20,12 @@ public class WorkoutSessionController {
     @PostMapping
     public ResponseEntity<WorkoutSessionResponse> startWorkoutSession(
             Authentication authentication,
-            @RequestParam(required = false) Long planId,
-            @RequestParam(required = false) String notes
-    ) {
+            @RequestBody WorkoutSessionRequest request
+            ) {
         return ResponseEntity.ok(
                 workoutSessionService.startWorkoutSession(
                         authentication.getName(),
-                        planId,
-                        notes
+                        request
                 )
         );
     }

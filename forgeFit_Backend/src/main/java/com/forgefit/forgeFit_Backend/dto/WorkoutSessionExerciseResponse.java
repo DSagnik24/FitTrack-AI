@@ -2,8 +2,7 @@ package com.forgefit.forgeFit_Backend.dto;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -23,72 +23,36 @@ public class WorkoutSessionService {
     private final WorkoutPlanRepository workoutPlanRepository;
     private final WorkoutPlanExerciseRepository workoutPlanExerciseRepository;
 
+
+    // =========================================================
+    // START WORKOUT SESSION
+    // =========================================================
+
     public WorkoutSessionResponse startWorkoutSession(
             String email,
-            Long planId,
-            String notes
+            WorkoutSessionRequest request
     ) {
 
+        // 1. Get logged-in user
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new RuntimeException("User not found")
                 );
 
-        WorkoutPlan workoutPlan = null;
-
-        if (planId != null) {
-
-            workoutPlan = workoutPlanRepository.findById(planId)
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "Workout plan not found"
-                            )
-                    );
-
-            if (!workoutPlan.getUser().getUserId()
-                    .equals(user.getUserId())) {
-
-                throw new RuntimeException(
-                        "You are not authorized to use this workout plan"
-                );
-            }
-        }
-
-        WorkoutSession session = WorkoutSession.builder()
-                .user(user)
-                .workoutPlan(workoutPlan)
-                .startedAt(LocalDateTime.now())
-                .status(WorkoutSessionStatus.IN_PROGRESS)
-                .notes(notes)
-                .build();
-
-        WorkoutSession saved =
-                workoutSessionRepository.save(session);
-
-        return mapToResponse(saved);
-    }
-
-    public WorkoutSessionResponse startSession(
-            String email,
-            WorkoutSessionRequest request) {
-
-        // 1. Get logged-in user
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
-
 
         WorkoutPlan workoutPlan = null;
 
 
-        // 2. If a workout plan is provided
+        // 2. Get workout plan if provided
         if (request.getWorkoutPlanId() != null) {
 
             workoutPlan = workoutPlanRepository
                     .findById(request.getWorkoutPlanId())
                     .orElseThrow(() ->
                             new RuntimeException(
-                                    "Workout plan not found"));
+                                    "Workout plan not found"
+                            )
+                    );
 
 
             // 3. Check ownership
@@ -96,11 +60,12 @@ public class WorkoutSessionService {
                     .equals(user.getUserId())) {
 
                 throw new RuntimeException(
-                        "You do not have access to this workout plan");
+                        "You are not authorized to use this workout plan"
+                );
             }
 
 
-            // 4. Validate requested day
+            // 4. Validate selected day
             if (request.getDayNumber() != null) {
 
                 List<WorkoutPlanExercise> exercises =
@@ -115,24 +80,25 @@ public class WorkoutSessionService {
 
                     throw new RuntimeException(
                             "No exercises found for day "
-                                    + request.getDayNumber());
+                                    + request.getDayNumber()
+                    );
                 }
             }
         }
 
 
-        // 5. Create session
+        // 5. Create workout session
         WorkoutSession session = WorkoutSession.builder()
                 .user(user)
                 .workoutPlan(workoutPlan)
                 .dayNumber(request.getDayNumber())
-                .notes(request.getNotes())
-                .status(WorkoutSessionStatus.IN_PROGRESS)
                 .startedAt(LocalDateTime.now())
+                .status(WorkoutSessionStatus.IN_PROGRESS)
+                .notes(request.getNotes())
                 .build();
 
 
-        // 6. Save
+        // 6. Save session
         WorkoutSession savedSession =
                 workoutSessionRepository.save(session);
 
@@ -141,6 +107,10 @@ public class WorkoutSessionService {
         return mapToResponse(savedSession);
     }
 
+
+    // =========================================================
+    // GET ALL SESSIONS
+    // =========================================================
 
     public List<WorkoutSessionResponse> getAllSessions(
             String email
@@ -151,12 +121,18 @@ public class WorkoutSessionService {
                         new RuntimeException("User not found")
                 );
 
+
         return workoutSessionRepository
                 .findByUser_UserId(user.getUserId())
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
+
+
+    // =========================================================
+    // GET SINGLE SESSION
+    // =========================================================
 
     public WorkoutSessionResponse getSession(
             String email,
@@ -167,6 +143,7 @@ public class WorkoutSessionService {
                 .orElseThrow(() ->
                         new RuntimeException("User not found")
                 );
+
 
         WorkoutSession session =
                 workoutSessionRepository
@@ -180,8 +157,14 @@ public class WorkoutSessionService {
                                 )
                         );
 
+
         return mapToResponse(session);
     }
+
+
+    // =========================================================
+    // COMPLETE WORKOUT SESSION
+    // =========================================================
 
     public WorkoutSessionResponse completeWorkoutSession(
             String email,
@@ -191,14 +174,29 @@ public class WorkoutSessionService {
         WorkoutSession session =
                 getSessionEntity(email, sessionId);
 
+
+        // Workout must still be active
+        if (session.getStatus()
+                != WorkoutSessionStatus.IN_PROGRESS) {
+
+            throw new RuntimeException(
+                    "Workout session is already completed or cancelled"
+            );
+        }
+
+
+        // Mark completed
         session.setStatus(
                 WorkoutSessionStatus.COMPLETED
         );
+
 
         session.setCompletedAt(
                 LocalDateTime.now()
         );
 
+
+        // Calculate duration
         if (session.getStartedAt() != null) {
 
             long minutes =
@@ -212,11 +210,18 @@ public class WorkoutSessionService {
             );
         }
 
+
         WorkoutSession updated =
                 workoutSessionRepository.save(session);
 
+
         return mapToResponse(updated);
     }
+
+
+    // =========================================================
+    // CANCEL WORKOUT SESSION
+    // =========================================================
 
     public WorkoutSessionResponse cancelWorkoutSession(
             String email,
@@ -226,19 +231,28 @@ public class WorkoutSessionService {
         WorkoutSession session =
                 getSessionEntity(email, sessionId);
 
+
         session.setStatus(
                 WorkoutSessionStatus.CANCELLED
         );
+
 
         session.setCompletedAt(
                 LocalDateTime.now()
         );
 
+
         WorkoutSession updated =
                 workoutSessionRepository.save(session);
 
+
         return mapToResponse(updated);
     }
+
+
+    // =========================================================
+    // GET SESSION ENTITY
+    // =========================================================
 
     private WorkoutSession getSessionEntity(
             String email,
@@ -249,6 +263,7 @@ public class WorkoutSessionService {
                 .orElseThrow(() ->
                         new RuntimeException("User not found")
                 );
+
 
         return workoutSessionRepository
                 .findByIdAndUser_UserId(
@@ -262,11 +277,23 @@ public class WorkoutSessionService {
                 );
     }
 
+
+    // =========================================================
+    // MAP ENTITY → RESPONSE
+    // =========================================================
+
     private WorkoutSessionResponse mapToResponse(
-            WorkoutSession session) {
+            WorkoutSession session
+    ) {
 
         return WorkoutSessionResponse.builder()
                 .id(session.getId())
+
+                .userId(
+                        session.getUser() != null
+                                ? session.getUser().getUserId()
+                                : null
+                )
 
                 .workoutPlanId(
                         session.getWorkoutPlan() != null
@@ -274,21 +301,36 @@ public class WorkoutSessionService {
                                 : null
                 )
 
-                .dayNumber(session.getDayNumber())
+                .workoutPlanName(
+                        session.getWorkoutPlan() != null
+                                ? session.getWorkoutPlan().getName()
+                                : null
+                )
 
-                .startedAt(session.getStartedAt())
+                .startedAt(
+                        session.getStartedAt()
+                )
 
-                .completedAt(session.getCompletedAt())
+                .completedAt(
+                        session.getCompletedAt()
+                )
 
-                .status(session.getStatus())
+                .status(
+                        session.getStatus()
+                )
 
                 .durationMinutes(
                         session.getDurationMinutes()
                 )
 
-                .notes(session.getNotes())
+                .dayNumber(
+                        session.getDayNumber()
+                )
+
+                .notes(
+                        session.getNotes()
+                )
 
                 .build();
     }
-
 }
